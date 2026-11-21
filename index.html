@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ServerForge — One console for the server on your machine.</title>
+    <meta
+      name="description"
+      content="ServerForge is a Windows-first Tauri desktop app for creating and managing local Minecraft server instances. Version 0.1.0. Early software. No public installer."
+    />
+    <meta name="theme-color" content="#121314" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <div class="topbar" id="top">
+      <header class="site-header">
+        <div class="container header-inner">
+          <a class="wordmark" href="#top">ServerForge</a>
+          <div class="header-tools">
+            <p class="version-tag">v0.1.0 · Windows-first</p>
+            <button
+              type="button"
+              class="button button-primary"
+              data-open-installer
+              aria-describedby="installer-note"
+            >
+              Get the app
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <nav class="mobile-nav" aria-label="Sections">
+        <div class="mobile-nav-scroll container">
+          <a href="#instances" data-section-link aria-current="true">
+            <span class="num">01</span><span class="label">Instances</span>
+          </a>
+          <a href="#live-console" data-section-link>
+            <span class="num">02</span><span class="label">Live console</span>
+          </a>
+          <a href="#modrinth" data-section-link>
+            <span class="num">03</span><span class="label">Modrinth</span>
+          </a>
+          <a href="#players" data-section-link>
+            <span class="num">04</span><span class="label">Players</span>
+          </a>
+          <a href="#customization" data-section-link>
+            <span class="num">05</span><span class="label">Customization</span>
+          </a>
+          <a href="#local-data" data-section-link>
+            <span class="num">06</span><span class="label">Local data</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+
+    <main id="content">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Local Minecraft servers</p>
+            <h1 id="hero-title">
+              One console<br />
+              for the server on<br />
+              your machine.
+            </h1>
+            <p class="lede">
+              ServerForge creates and manages local Minecraft server instances.
+              Lifecycle, live console, Modrinth mods and modpacks, players, and
+              customization.
+            </p>
+            <p class="version-line">Version 0.1.0. Windows-first. Early software.</p>
+            <div class="actions">
+              <button
+                type="button"
+                class="button button-primary"
+                data-open-installer
+                aria-describedby="installer-note"
+              >
+                Get the app
+              </button>
+              <a class="button button-secondary" href="#instances">See what it does</a>
+            </div>
+            <p class="note" id="installer-note">
+              Placeholder. No installer is served from this page.
+            </p>
+          </div>
+
+          <aside class="hero-side" aria-label="Interface preview">
+            <div class="preview-block">
+              <div class="panel" aria-describedby="library-caption">
+                <div class="panel-head">
+                  <p class="panel-kicker">Instances</p>
+                  <p class="panel-aside">Interface preview</p>
+                </div>
+                <ul class="instance-list">
+                  <li>
+                    <span class="instance-name">survival</span>
+                    <span class="status status-running">
+                      <span class="dot" aria-hidden="true"></span>Running
+                    </span>
+                  </li>
+                  <li>
+                    <span class="instance-name">modded</span>
+                    <span class="status status-starting">
+                      <span class="dot" aria-hidden="true"></span>Starting
+                    </span>
+                  </li>
+                  <li>
+                    <span class="instance-name">creative</span>
+                    <span class="status status-stopped">
+                      <span class="dot" aria-hidden="true"></span>Stopped
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <p class="caption" id="library-caption">
+                Example names. Not a capture of a real library.
+              </p>
+            </div>
+
+            <nav class="section-index" aria-label="Sections">
+              <ol>
+                <li>
+                  <a href="#instances" data-section-link aria-current="true">
+                    <span class="num">01</span><span class="label">Instances</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#live-console" data-section-link>
+                    <span class="num">02</span><span class="label">Live console</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#modrinth" data-section-link>
+                    <span class="num">03</span><span class="label">Modrinth</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#players" data-section-link>
+                    <span class="num">04</span><span class="label">Players</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#customization" data-section-link>
+                    <span class="num">05</span><span class="label">Customization</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#local-data" data-section-link>
+                    <span class="num">06</span><span class="label">Local data</span>
+                  </a>
+                </li>
+              </ol>
+            </nav>
+          </aside>
+        </div>
+        <div class="container hero-rule-wrap">
+          <hr class="hero-rule" />
+        </div>
+      </section>
+
+      <section class="story" id="instances" aria-labelledby="instances-title">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="kicker">01 / Instances</p>
+            <h2 id="instances-title">Create, import, and switch instances.</h2>
+            <p class="body">
+              Create, import, duplicate, update, and remove Minecraft server
+              instances. Keep more than one server, and switch to the one you
+              want to run or maintain.
+            </p>
+          </div>
+          <div class="story-visual">
+            <div class="only-mobile">
+              <div class="panel" aria-describedby="library-caption-mobile">
+                <div class="panel-head">
+                  <p class="panel-kicker">Instances</p>
+                  <p class="panel-aside">Interface preview</p>
+                </div>
+                <ul class="instance-list">
+                  <li>
+                    <span class="instance-name">survival</span>
+                    <span class="status status-running">
+                      <span class="dot" aria-hidden="true"></span>Running
+                    </span>
+                  </li>
+                  <li>
+                    <span class="instance-name">modded</span>
+                    <span class="status status-starting">
+                      <span class="dot" aria-hidden="true"></span>Starting
+                    </span>
+                  </li>
+                  <li>
+                    <span class="instance-name">creative</span>
+                    <span class="status status-stopped">
+                      <span class="dot" aria-hidden="true"></span>Stopped
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <p class="caption" id="library-caption-mobile">
+                Example names. Not a capture of a real library.
+              </p>
+            </div>
+            <div class="only-desktop">
+              <div class="panel">
+                <div class="panel-head">
+                  <p class="panel-kicker">Instances</p>
+                  <p class="panel-aside">Interface preview</p>
+                </div>
+                <ul class="rows">
+                  <li>Create</li>
+                  <li>Import</li>
+                  <li>Duplicate</li>
+                  <li>Update</li>
+                  <li>Remove</li>
+                </ul>
+              </div>
+              <p class="caption">Example list. Not a capture of the app.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="story" id="live-console" aria-labelledby="console-title">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="kicker">02 / Live console</p>
+            <h2 id="console-title">Start, stop, and send commands.</h2>
+            <p class="body">
+              The live console shows output from the server process and takes
+              commands. Start, stop, and monitor that process from the same
+              place. The Minecraft EULA has to be accepted before a server can
+              launch.
+            </p>
+          </div>
+          <div class="story-visual">
+            <div class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">Live console</p>
+                <p class="panel-aside">Interface preview</p>
+              </div>
+              <dl class="specs">
+                <div class="kv">
+                  <dt>EULA</dt>
+                  <dd>Required before launch</dd>
+                </div>
+                <div class="kv">
+                  <dt>Process</dt>
+                  <dd>Start, stop, monitor</dd>
+                </div>
+                <div class="kv">
+                  <dt>Command</dt>
+                  <dd>Sent to the process</dd>
+                </div>
+              </dl>
+              <p class="command-preview">
+                <span class="prompt" aria-hidden="true">&gt;</span>
+                example command
+              </p>
+            </div>
+            <p class="caption">Example only. Not a capture of a live server.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="story" id="modrinth" aria-labelledby="modrinth-title">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="kicker">03 / Modrinth</p>
+            <h2 id="modrinth-title">Install mods and modpacks.</h2>
+            <p class="body">
+              Search Modrinth, then install, update, remove, or disable mods.
+              A modpack is managed as a group, not as unrelated files. Downloads
+              are validated, and checksum verification stays on that path.
+            </p>
+          </div>
+          <div class="story-visual">
+            <div class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">Modrinth</p>
+                <p class="panel-aside">Interface preview</p>
+              </div>
+              <dl class="specs">
+                <div class="kv">
+                  <dt>Search</dt>
+                  <dd>Modrinth</dd>
+                </div>
+                <div class="kv">
+                  <dt>Mod</dt>
+                  <dd>Install, update, remove, disable</dd>
+                </div>
+                <div class="kv">
+                  <dt>Modpack</dt>
+                  <dd>Managed as a group</dd>
+                </div>
+                <div class="kv">
+                  <dt>Checksum</dt>
+                  <dd>Verified with the download</dd>
+                </div>
+              </dl>
+            </div>
+            <p class="caption">Example only. Not a capture of a mod list.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="story" id="players" aria-labelledby="players-title">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="kicker">04 / Players</p>
+            <h2 id="players-title">Whitelist, bans, and operators.</h2>
+            <p class="body">
+              Manage whitelist entries, bans, and operators for a server. Player
+              skins and player statistics stay with that administration.
+            </p>
+          </div>
+          <div class="story-visual">
+            <div class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">Players</p>
+                <p class="panel-aside">Interface preview</p>
+              </div>
+              <ul class="rows">
+                <li>Whitelist</li>
+                <li>Bans</li>
+                <li>Operators</li>
+                <li>Skins</li>
+                <li>Statistics</li>
+              </ul>
+            </div>
+            <p class="caption">Example only. Not a capture of a player list.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="story" id="customization" aria-labelledby="customization-title">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="kicker">05 / Customization</p>
+            <h2 id="customization-title">Properties, MOTD, and world settings.</h2>
+            <p class="body">
+              Edit server.properties, the message of the day, the server icon,
+              gameplay settings, and world settings.
+            </p>
+          </div>
+          <div class="story-visual">
+            <div class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">Customization</p>
+                <p class="panel-aside">Interface preview</p>
+              </div>
+              <ul class="rows">
+                <li>server.properties</li>
+                <li>
+                  <span>MOTD</span>
+                  <span class="row-note">A Minecraft Server</span>
+                </li>
+                <li>Server icon</li>
+                <li>Gameplay settings</li>
+                <li>World settings</li>
+              </ul>
+            </div>
+            <p class="caption">
+              Example values. Not a capture of a real server. "A Minecraft Server"
+              is an example MOTD.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="story" id="local-data" aria-labelledby="local-data-title">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="kicker">06 / Local data</p>
+            <h2 id="local-data-title">Metadata and files stay local.</h2>
+            <p class="body">
+              Per-instance metadata and global application settings are stored
+              on the machine. Server files remain in the directory for that
+              server.
+            </p>
+          </div>
+          <div class="story-visual">
+            <div class="panel">
+              <div class="panel-head">
+                <p class="panel-kicker">Local data</p>
+                <p class="panel-aside">Interface preview</p>
+              </div>
+              <dl class="specs">
+                <div class="kv">
+                  <dt>Instance metadata</dt>
+                  <dd>On this machine</dd>
+                </div>
+                <div class="kv">
+                  <dt>Application settings</dt>
+                  <dd>On this machine</dd>
+                </div>
+                <div class="kv">
+                  <dt>Server directory</dt>
+                  <dd>On this machine</dd>
+                </div>
+              </dl>
+            </div>
+            <p class="caption">Example only. Not a listing from a real machine.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>ServerForge · Version 0.1.0 · Windows-first Tauri desktop app · Early software</p>
+        <p>Scorppu</p>
+      </div>
+    </footer>
+
+    <dialog id="installer-dialog" aria-labelledby="installer-title" aria-describedby="installer-body">
+      <h2 id="installer-title">No public installer</h2>
+      <p id="installer-body">
+        There is no public installer for ServerForge. This button does not
+        download a file or start an install.
+      </p>
+      <button type="button" class="button button-secondary" data-close-installer autofocus>
+        Close
+      </button>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
