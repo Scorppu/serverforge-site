@@ -114,11 +114,20 @@ a {
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   color: #f2f2f2;
   font-weight: 600;
   font-size: 0.95rem;
   letter-spacing: -0.011em;
   text-decoration: none;
+}
+
+.wordmark img {
+  display: block;
+  height: 1rem;
+  width: auto;
 }
 
 .header-tools {
@@ -629,7 +638,7 @@ dialog p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 3.5rem;
+  height: 2.5rem;
   padding: 0 0.5rem;
   background: #191a1b;
   border-bottom: 1px solid #2a2b2c;
@@ -644,16 +653,10 @@ dialog p {
   font-weight: 500;
 }
 
-.chrome-mark {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.25rem;
-  background: rgba(57, 148, 188, 0.15);
-  color: #3994bc;
-  font-size: 1.125rem;
-  font-weight: 700;
+.chrome-logo {
+  display: block;
+  height: 1rem;
+  width: auto;
 }
 
 .chrome-win {
@@ -665,13 +668,13 @@ dialog p {
 .chrome-win span {
   display: grid;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 .chrome-win .ico {
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .shell {
