@@ -10,8 +10,112 @@
     />
     <meta name="theme-color" content="#121314" />
     <link rel="icon" href="/favicon.png" type="image/png" />
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var reduce = false;
+        try {
+          reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        } catch (e) {}
+        if (reduce) {
+          root.classList.add("reduced-motion");
+          return;
+        }
+        root.classList.add("motion-ok");
+        var seen = false;
+        try {
+          seen = sessionStorage.getItem("sf-welcome") === "1";
+        } catch (e) {}
+        if (seen) return;
+        root.classList.add("show-welcome");
+        var lockScroll = function (event) {
+          event.preventDefault();
+        };
+        var blockKeys = function (event) {
+          if (
+            event.key === " " ||
+            event.key === "Spacebar" ||
+            event.key === "ArrowDown" ||
+            event.key === "ArrowUp" ||
+            event.key === "PageDown" ||
+            event.key === "PageUp" ||
+            event.key === "Home" ||
+            event.key === "End"
+          ) {
+            event.preventDefault();
+          }
+        };
+        window.addEventListener("wheel", lockScroll, { passive: false });
+        window.addEventListener("touchmove", lockScroll, { passive: false });
+        window.addEventListener("keydown", blockKeys);
+        window.addEventListener(
+          "sf-welcome-done",
+          function () {
+            window.removeEventListener("wheel", lockScroll);
+            window.removeEventListener("touchmove", lockScroll);
+            window.removeEventListener("keydown", blockKeys);
+          },
+          { once: true },
+        );
+      })();
+    </script>
+    <style>
+      .welcome { display: none; }
+      html.show-welcome .welcome {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex !important;
+        align-items: center;
+        box-sizing: border-box;
+        background: #121314;
+        color: #efefef;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      .welcome-inner { width: min(1120px, calc(100% - 2.5rem)); margin-inline: auto; }
+      .welcome-block { display: grid; }
+      .welcome-ghost, .welcome-live { grid-area: 1 / 1; }
+      .welcome-ghost { visibility: hidden; }
+      .welcome-line {
+        position: relative;
+        margin: 0;
+        min-height: 1.55em;
+        font-size: clamp(1.12rem, 2.15vw, 1.45rem);
+        line-height: 1.55;
+        text-align: left;
+        white-space: normal;
+      }
+      .welcome-prompt, .welcome-text { white-space: pre-wrap; }
+      .welcome-prompt { color: #73c991; }
+      .welcome-caret {
+        position: absolute;
+        width: 0.52ch;
+        height: 0.82em;
+        background: #efefef;
+        visibility: hidden;
+      }
+      .welcome-line.is-active .welcome-caret { visibility: visible; }
+      .welcome-hint { margin-top: 1.75rem; color: #8c8c8c; font-size: 0.75rem; }
+    </style>
   </head>
   <body>
+    <div class="welcome textured" hidden aria-hidden="true">
+      <div class="welcome-inner">
+        <div class="welcome-block">
+          <div class="welcome-ghost">
+            <p class="welcome-line"><span class="welcome-prompt">$ </span>serverforge</p>
+            <p class="welcome-line">welcome</p>
+            <p class="welcome-line">local Minecraft server operations</p>
+          </div>
+          <div class="welcome-live">
+            <p class="welcome-line" data-line="0"><span class="welcome-prompt">$ </span><span class="welcome-text"></span><span class="welcome-caret"></span></p>
+            <p class="welcome-line" data-line="1"><span class="welcome-text"></span><span class="welcome-caret"></span></p>
+            <p class="welcome-line" data-line="2"><span class="welcome-text"></span><span class="welcome-caret"></span></p>
+          </div>
+        </div>
+        <p class="welcome-hint">Click or press any key to skip</p>
+      </div>
+    </div>
     <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-folder" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 6h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/></symbol>
