@@ -3,6 +3,8 @@ import "@fontsource/inter/latin-500.css";
 import "@fontsource/inter/latin-600.css";
 import "@fontsource/inter/latin-700.css";
 import "./styles.css";
+import { bindScrollType, updateScrollType } from "./scroll-type";
+import { startWelcome } from "./welcome";
 
 const sectionIds = [
   "instances",
@@ -43,6 +45,8 @@ dialog?.addEventListener("close", () => {
 });
 
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+bindScrollType(prefersReducedMotion);
+startWelcome(prefersReducedMotion);
 let currentId = "";
 
 function headerOffset(): number {
@@ -99,6 +103,7 @@ function onScroll(): void {
   ticking = true;
   requestAnimationFrame(() => {
     updateCurrent();
+    updateScrollType();
     ticking = false;
   });
 }
@@ -106,6 +111,9 @@ function onScroll(): void {
 window.addEventListener("scroll", onScroll, { passive: true });
 window.addEventListener("resize", onScroll);
 window.addEventListener("hashchange", () => {
-  requestAnimationFrame(updateCurrent);
+  requestAnimationFrame(() => {
+    updateCurrent();
+    updateScrollType();
+  });
 });
 updateCurrent();
