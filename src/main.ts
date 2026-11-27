@@ -111,6 +111,9 @@ function onScroll(): void {
 window.addEventListener("scroll", onScroll, { passive: true });
 window.addEventListener("resize", onScroll);
 window.addEventListener("hashchange", () => {
-  requestAnimationFrame(updateCurrent);
+  requestAnimationFrame(() => {
+    updateCurrent();
+    updateScrollType();
+  });
 });
 updateCurrent();

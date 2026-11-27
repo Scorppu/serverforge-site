@@ -21,9 +21,10 @@ type Block = {
 
 const originals = new Map<HTMLElement, string>();
 let blocks: Block[] = [];
-let caretChar: HTMLElement | null = null;
-let armedEl: HTMLElement | null = null;
 let reduceQuery: MediaQueryList | null = null;
+
+/** A block is fully typed once its top reaches this fraction of the viewport. */
+const ENTER_LINE = 0.9;
 
 function tokensFrom(el: HTMLElement): Token[] {
   const tokens: Token[] = [];
@@ -94,20 +95,26 @@ function enhance(el: HTMLElement): Block | null {
   return { el, chars, shown: -1 };
 }
 
-function clearCaret(): void {
-  caretChar?.classList.remove("is-caret");
-  caretChar = null;
-  armedEl?.classList.remove("is-armed");
-  armedEl = null;
-}
-
 function restoreAll(): void {
-  clearCaret();
   for (const [el, html] of originals) {
     el.innerHTML = html;
-    el.classList.remove("typed", "is-armed");
+    el.classList.remove("typed");
   }
   blocks = [];
+}
+
+function scrollPadding(): number {
+  const raw = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  const topbar = document.querySelector(".topbar");
+  return (topbar?.getBoundingClientRect().height ?? 64) + 16;
+}
+
+function sectionLanded(el: HTMLElement): boolean {
+  const section = el.closest("section");
+  if (!section) return false;
+  // In-page links settle with the section top at scroll-padding, just under the header.
+  return section.getBoundingClientRect().top <= scrollPadding() + 24;
 }
 
 function scrollProgress(el: HTMLElement): number {
@@ -116,13 +123,16 @@ function scrollProgress(el: HTMLElement): number {
   const docTop = el.getBoundingClientRect().top + scrollY;
   const maxScroll = Math.max(0, document.documentElement.scrollHeight - vh);
 
-  // Copy that already starts on the first screen is the hero handoff: show it whole.
-  // Everything below reveals only as scroll moves it from the fold to the reading line.
-  if (docTop < vh - 1) return 1;
   if (maxScroll <= 0 || scrollY >= maxScroll - 1) return 1;
+  // Copy on the opening screen is the handoff, already complete.
+  if (docTop < vh - 1) return 1;
+  // A nav or hash landing completes that section and every section above it.
+  if (sectionLanded(el)) return 1;
 
+  // 0 when the block is still at the bottom edge, 1 once it has entered
+  // the lower band (top at 90% of the viewport). Mid-screen text is done.
   const start = docTop - vh;
-  const end = Math.min(docTop - vh * 0.42, maxScroll);
+  const end = Math.min(docTop - vh * ENTER_LINE, maxScroll);
   if (end <= start) return scrollY >= end ? 1 : 0;
   return Math.min(1, Math.max(0, (scrollY - start) / (end - start)));
 }
@@ -143,35 +153,10 @@ function applyCount(block: Block, count: number): void {
   block.shown = count;
 }
 
-function placeCaret(block: Block | null, count: number): void {
-  const nextChar =
-    block && count > 0 && count < block.chars.length ? (block.chars[count - 1] ?? null) : null;
-  const nextArmed = block && count <= 0 && block.chars.length > 0 ? block.el : null;
-  if (caretChar === nextChar && armedEl === nextArmed) return;
-  clearCaret();
-  if (nextArmed) {
-    nextArmed.classList.add("is-armed");
-    armedEl = nextArmed;
-  }
-  if (nextChar) {
-    nextChar.classList.add("is-caret");
-    caretChar = nextChar;
-  }
-}
-
 export function updateScrollType(): void {
   if (blocks.length === 0) return;
-  const measured = blocks.map((block) => {
-    const progress = scrollProgress(block.el);
-    return { progress, count: countFor(progress, block.chars.length) };
-  });
-  blocks.forEach((block, index) => applyCount(block, measured[index].count));
-
-  let active = -1;
-  for (let i = 0; i < measured.length; i++) {
-    if (measured[i].progress > 0 && measured[i].progress < 1) active = i;
-  }
-  placeCaret(active < 0 ? null : blocks[active], active < 0 ? 0 : measured[active].count);
+  const measured = blocks.map((block) => countFor(scrollProgress(block.el), block.chars.length));
+  blocks.forEach((block, index) => applyCount(block, measured[index]));
 }
 
 function enhanceAll(): void {
@@ -204,6 +189,10 @@ export function bindScrollType(reduce: MediaQueryList): void {
   });
 
   document.fonts?.ready.then(() => updateScrollType()).catch(() => undefined);
+  window.addEventListener("scrollend", () => updateScrollType());
+  window.addEventListener("hashchange", () => {
+    requestAnimationFrame(updateScrollType);
+  });
 
   const observer = new ResizeObserver(() => updateScrollType());
   observer.observe(document.documentElement);

@@ -598,15 +598,8 @@ dialog p {
     display: none !important;
   }
 
-  .typed-ch,
-  .typed-ch.is-caret::after {
+  .typed-ch {
     opacity: 1 !important;
-    animation: none !important;
-  }
-
-  .typed-ch.is-caret::after,
-  .typed.is-armed .typed-visual::before {
-    display: none !important;
   }
 }
 
@@ -616,7 +609,7 @@ dialog p {
   }
 }
 
-/* Command-line welcome and scroll-tied page copy. Mono is the app stack, not Monocraft. */
+/* Command-line welcome. Page copy stays in Inter; only this intro uses the app mono stack. */
 .welcome {
   display: none;
   position: fixed;
@@ -711,41 +704,6 @@ html.welcome-leave .welcome {
   line-height: 1.4;
 }
 
-@media not (prefers-reduced-motion: reduce) {
-  html.motion-ok :is(
-    .eyebrow,
-    .hero h1,
-    .lede,
-    .version-line,
-    .hero .note,
-    .story .kicker,
-    .story h2,
-    .story .body,
-    .caption,
-    .site-footer p
-  ) {
-    font-family: var(--app-mono);
-    font-weight: 400;
-    font-variant-ligatures: none;
-    letter-spacing: 0;
-  }
-
-  /* Mono is wider than Inter. Keep the hero's three manual lines inside the column. */
-  html.motion-ok .hero h1 {
-    line-height: 1.16;
-    font-size: clamp(1.5rem, 8.4cqi, 3.05rem);
-  }
-
-  html.motion-ok .story h2 {
-    line-height: 1.28;
-    font-size: clamp(1.28rem, 2.45vw, 1.8rem);
-  }
-
-  html.motion-ok :is(.eyebrow, .story .kicker) {
-    letter-spacing: 0.14em;
-  }
-}
-
 .typed {
   position: relative;
 }
@@ -775,32 +733,6 @@ html.welcome-leave .welcome {
   html.motion-ok .typed-ch:not(.is-on) {
     opacity: 0;
   }
-}
-
-.typed-ch.is-caret {
-  position: relative;
-}
-
-.typed-ch.is-caret::after,
-.typed.is-armed .typed-visual::before {
-  content: "";
-  display: inline-block;
-  width: 0.5ch;
-  height: 0.78em;
-  background: currentColor;
-  vertical-align: text-bottom;
-  pointer-events: none;
-  animation: typed-blink 1.05s steps(1, end) infinite;
-}
-
-.typed-ch.is-caret::after {
-  position: absolute;
-  left: calc(100% + 0.06ch);
-  top: 0.12em;
-}
-
-.typed.is-armed .typed-visual::before {
-  margin-right: -0.5ch;
 }
 
 @keyframes typed-blink {
