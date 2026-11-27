@@ -22,9 +22,21 @@ type Block = {
 const originals = new Map<HTMLElement, string>();
 let blocks: Block[] = [];
 let reduceQuery: MediaQueryList | null = null;
+let lastScrollY = -1;
+let catchupGen = 0;
+let catchupTimer = 0;
+let catchupRunning = false;
 
-/** A block is fully typed once its top reaches this fraction of the viewport. */
-const ENTER_LINE = 0.9;
+/**
+ * While scrolling, a block reaches the scroll-tied count once its top hits this
+ * fraction of the viewport (the lower quarter of the screen). Stopping, or a
+ * nav landing, then finishes that copy on a short timer.
+ */
+const ENTER_LINE = 0.75;
+const CATCHUP_IDLE_MS = 160;
+const CATCHUP_MIN_MS = 280;
+const CATCHUP_MAX_MS = 680;
+const CATCHUP_PER_CHAR_MS = 12;
 
 function tokensFrom(el: HTMLElement): Token[] {
   const tokens: Token[] = [];
@@ -95,12 +107,20 @@ function enhance(el: HTMLElement): Block | null {
   return { el, chars, shown: -1 };
 }
 
+function stopCatchup(): void {
+  catchupGen += 1;
+  catchupRunning = false;
+  window.clearTimeout(catchupTimer);
+}
+
 function restoreAll(): void {
+  stopCatchup();
   for (const [el, html] of originals) {
     el.innerHTML = html;
     el.classList.remove("typed");
   }
   blocks = [];
+  lastScrollY = -1;
 }
 
 function scrollPadding(): number {
@@ -126,11 +146,8 @@ function scrollProgress(el: HTMLElement): number {
   if (maxScroll <= 0 || scrollY >= maxScroll - 1) return 1;
   // Copy on the opening screen is the handoff, already complete.
   if (docTop < vh - 1) return 1;
-  // A nav or hash landing completes that section and every section above it.
-  if (sectionLanded(el)) return 1;
 
-  // 0 when the block is still at the bottom edge, 1 once it has entered
-  // the lower band (top at 90% of the viewport). Mid-screen text is done.
+  // 0 at the bottom edge, 1 once the top reaches 75% of the viewport.
   const start = docTop - vh;
   const end = Math.min(docTop - vh * ENTER_LINE, maxScroll);
   if (end <= start) return scrollY >= end ? 1 : 0;
@@ -153,10 +170,75 @@ function applyCount(block: Block, count: number): void {
   block.shown = count;
 }
 
+function isOnScreen(el: HTMLElement): boolean {
+  const rect = el.getBoundingClientRect();
+  return rect.bottom > 0 && rect.top < window.innerHeight;
+}
+
+function arrivalCount(block: Block): number {
+  const total = block.chars.length;
+  const scrolled = countFor(scrollProgress(block.el), total);
+  if (scrolled >= total || isOnScreen(block.el) || sectionLanded(block.el)) return total;
+  return scrolled;
+}
+
+function applyFromScroll(): void {
+  blocks.forEach((block) => {
+    const count = countFor(scrollProgress(block.el), block.chars.length);
+    const shown = block.shown < 0 ? 0 : block.shown;
+    applyCount(block, Math.max(shown, count));
+  });
+}
+
+function runCatchup(): void {
+  if (reduceQuery?.matches || blocks.length === 0) return;
+  const from = blocks.map((block) => (block.shown < 0 ? 0 : block.shown));
+  const to = blocks.map((block) => arrivalCount(block));
+  const remaining = Math.max(0, ...to.map((target, index) => target - from[index]));
+  if (remaining === 0) return;
+
+  const duration = Math.min(
+    CATCHUP_MAX_MS,
+    Math.max(CATCHUP_MIN_MS, remaining * CATCHUP_PER_CHAR_MS),
+  );
+  const gen = ++catchupGen;
+  catchupRunning = true;
+  const started = performance.now();
+
+  const step = (now: number): void => {
+    if (gen !== catchupGen) return;
+    const t = Math.min(1, (now - started) / duration);
+    blocks.forEach((block, index) => {
+      const count = from[index] + Math.round((to[index] - from[index]) * t);
+      applyCount(block, count);
+    });
+    if (t < 1) {
+      requestAnimationFrame(step);
+      return;
+    }
+    catchupRunning = false;
+  };
+  requestAnimationFrame(step);
+}
+
+function scheduleCatchup(): void {
+  if (reduceQuery?.matches || catchupRunning) return;
+  window.clearTimeout(catchupTimer);
+  catchupTimer = window.setTimeout(runCatchup, CATCHUP_IDLE_MS);
+}
+
 export function updateScrollType(): void {
   if (blocks.length === 0) return;
-  const measured = blocks.map((block) => countFor(scrollProgress(block.el), block.chars.length));
-  blocks.forEach((block, index) => applyCount(block, measured[index]));
+  const y = window.scrollY;
+  const moved = Math.abs(y - lastScrollY) > 0.5;
+  if (!moved) {
+    if (!catchupRunning) applyFromScroll();
+    return;
+  }
+  stopCatchup();
+  lastScrollY = y;
+  applyFromScroll();
+  scheduleCatchup();
 }
 
 function enhanceAll(): void {
@@ -189,7 +271,7 @@ export function bindScrollType(reduce: MediaQueryList): void {
   });
 
   document.fonts?.ready.then(() => updateScrollType()).catch(() => undefined);
-  window.addEventListener("scrollend", () => updateScrollType());
+  window.addEventListener("scrollend", () => scheduleCatchup());
   window.addEventListener("hashchange", () => {
     requestAnimationFrame(updateScrollType);
   });
