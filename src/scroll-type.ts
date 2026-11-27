@@ -11,32 +11,24 @@ const TYPE_SELECTOR = [
   ".site-footer p",
 ].join(",");
 
+const TYPE_MIN_MS = 380;
+const TYPE_MAX_MS = 820;
+const TYPE_PER_CHAR_MS = 18;
+
 type Token = { kind: "char"; ch: string } | { kind: "br" };
 
 type Block = {
   el: HTMLElement;
   chars: HTMLElement[];
   shown: number;
+  started: boolean;
 };
 
 const originals = new Map<HTMLElement, string>();
 let blocks: Block[] = [];
 let reduceQuery: MediaQueryList | null = null;
-let lastScrollY = -1;
-let catchupGen = 0;
-let catchupTimer = 0;
-let catchupRunning = false;
-
-/**
- * While scrolling, a block reaches the scroll-tied count once its top hits this
- * fraction of the viewport (the lower quarter of the screen). Stopping, or a
- * nav landing, then finishes that copy on a short timer.
- */
-const ENTER_LINE = 0.75;
-const CATCHUP_IDLE_MS = 160;
-const CATCHUP_MIN_MS = 280;
-const CATCHUP_MAX_MS = 680;
-const CATCHUP_PER_CHAR_MS = 12;
+let animGen = 0;
+let viewObserver: IntersectionObserver | null = null;
 
 function tokensFrom(el: HTMLElement): Token[] {
   const tokens: Token[] = [];
@@ -104,60 +96,18 @@ function enhance(el: HTMLElement): Block | null {
 
   el.classList.add("typed");
   el.replaceChildren(sr, visual);
-  return { el, chars, shown: -1 };
-}
-
-function stopCatchup(): void {
-  catchupGen += 1;
-  catchupRunning = false;
-  window.clearTimeout(catchupTimer);
+  return { el, chars, shown: -1, started: false };
 }
 
 function restoreAll(): void {
-  stopCatchup();
+  animGen += 1;
+  viewObserver?.disconnect();
+  viewObserver = null;
   for (const [el, html] of originals) {
     el.innerHTML = html;
     el.classList.remove("typed");
   }
   blocks = [];
-  lastScrollY = -1;
-}
-
-function scrollPadding(): number {
-  const raw = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop);
-  if (Number.isFinite(raw) && raw > 0) return raw;
-  const topbar = document.querySelector(".topbar");
-  return (topbar?.getBoundingClientRect().height ?? 64) + 16;
-}
-
-function sectionLanded(el: HTMLElement): boolean {
-  const section = el.closest("section");
-  if (!section) return false;
-  // In-page links settle with the section top at scroll-padding, just under the header.
-  return section.getBoundingClientRect().top <= scrollPadding() + 24;
-}
-
-function scrollProgress(el: HTMLElement): number {
-  const vh = window.innerHeight || 1;
-  const scrollY = window.scrollY;
-  const docTop = el.getBoundingClientRect().top + scrollY;
-  const maxScroll = Math.max(0, document.documentElement.scrollHeight - vh);
-
-  if (maxScroll <= 0 || scrollY >= maxScroll - 1) return 1;
-  // Copy on the opening screen is the handoff, already complete.
-  if (docTop < vh - 1) return 1;
-
-  // 0 at the bottom edge, 1 once the top reaches 75% of the viewport.
-  const start = docTop - vh;
-  const end = Math.min(docTop - vh * ENTER_LINE, maxScroll);
-  if (end <= start) return scrollY >= end ? 1 : 0;
-  return Math.min(1, Math.max(0, (scrollY - start) / (end - start)));
-}
-
-function countFor(progress: number, total: number): number {
-  if (total === 0 || progress <= 0) return 0;
-  if (progress >= 1) return total;
-  return Math.min(total, Math.ceil(progress * total));
 }
 
 function applyCount(block: Block, count: number): void {
@@ -170,75 +120,57 @@ function applyCount(block: Block, count: number): void {
   block.shown = count;
 }
 
-function isOnScreen(el: HTMLElement): boolean {
+function hostOf(el: HTMLElement): HTMLElement | null {
+  return el.closest<HTMLElement>("section, footer");
+}
+
+function intersects(el: HTMLElement): boolean {
   const rect = el.getBoundingClientRect();
   return rect.bottom > 0 && rect.top < window.innerHeight;
 }
 
-function arrivalCount(block: Block): number {
+function atEnd(): boolean {
+  const vh = window.innerHeight || 1;
+  const maxScroll = document.documentElement.scrollHeight - vh;
+  return maxScroll <= 0 || window.scrollY >= maxScroll - 2;
+}
+
+function startBlock(block: Block): void {
+  if (block.started || reduceQuery?.matches) return;
+  block.started = true;
   const total = block.chars.length;
-  const scrolled = countFor(scrollProgress(block.el), total);
-  if (scrolled >= total || isOnScreen(block.el) || sectionLanded(block.el)) return total;
-  return scrolled;
-}
-
-function applyFromScroll(): void {
-  blocks.forEach((block) => {
-    const count = countFor(scrollProgress(block.el), block.chars.length);
-    const shown = block.shown < 0 ? 0 : block.shown;
-    applyCount(block, Math.max(shown, count));
-  });
-}
-
-function runCatchup(): void {
-  if (reduceQuery?.matches || blocks.length === 0) return;
-  const from = blocks.map((block) => (block.shown < 0 ? 0 : block.shown));
-  const to = blocks.map((block) => arrivalCount(block));
-  const remaining = Math.max(0, ...to.map((target, index) => target - from[index]));
-  if (remaining === 0) return;
-
-  const duration = Math.min(
-    CATCHUP_MAX_MS,
-    Math.max(CATCHUP_MIN_MS, remaining * CATCHUP_PER_CHAR_MS),
-  );
-  const gen = ++catchupGen;
-  catchupRunning = true;
-  const started = performance.now();
-
+  const gen = animGen;
+  if (total === 0) {
+    applyCount(block, 0);
+    return;
+  }
+  const duration = Math.min(TYPE_MAX_MS, Math.max(TYPE_MIN_MS, total * TYPE_PER_CHAR_MS));
+  const startedAt = performance.now();
   const step = (now: number): void => {
-    if (gen !== catchupGen) return;
-    const t = Math.min(1, (now - started) / duration);
-    blocks.forEach((block, index) => {
-      const count = from[index] + Math.round((to[index] - from[index]) * t);
-      applyCount(block, count);
-    });
-    if (t < 1) {
-      requestAnimationFrame(step);
-      return;
-    }
-    catchupRunning = false;
+    if (gen !== animGen) return;
+    const t = Math.min(1, (now - startedAt) / duration);
+    applyCount(block, Math.round(total * t));
+    if (t < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
 }
 
-function scheduleCatchup(): void {
-  if (reduceQuery?.matches || catchupRunning) return;
-  window.clearTimeout(catchupTimer);
-  catchupTimer = window.setTimeout(runCatchup, CATCHUP_IDLE_MS);
+function startHost(host: HTMLElement): void {
+  blocks.forEach((block) => {
+    if (hostOf(block.el) === host) startBlock(block);
+  });
+}
+
+function scanVisible(): void {
+  if (reduceQuery?.matches || blocks.length === 0) return;
+  const end = atEnd();
+  document.querySelectorAll<HTMLElement>("section, footer").forEach((host) => {
+    if (intersects(host) || (end && host.matches("footer, #local-data"))) startHost(host);
+  });
 }
 
 export function updateScrollType(): void {
-  if (blocks.length === 0) return;
-  const y = window.scrollY;
-  const moved = Math.abs(y - lastScrollY) > 0.5;
-  if (!moved) {
-    if (!catchupRunning) applyFromScroll();
-    return;
-  }
-  stopCatchup();
-  lastScrollY = y;
-  applyFromScroll();
-  scheduleCatchup();
+  scanVisible();
 }
 
 function enhanceAll(): void {
@@ -248,7 +180,20 @@ function enhanceAll(): void {
     const block = enhance(el);
     if (block) blocks.push(block);
   });
-  updateScrollType();
+}
+
+function watchView(): void {
+  viewObserver?.disconnect();
+  if (reduceQuery?.matches) return;
+  viewObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) startHost(entry.target as HTMLElement);
+    });
+  });
+  document.querySelectorAll<HTMLElement>("section, footer").forEach((host) => {
+    viewObserver?.observe(host);
+  });
+  scanVisible();
 }
 
 function sync(reduce: boolean): void {
@@ -260,7 +205,7 @@ function sync(reduce: boolean): void {
     return;
   }
   enhanceAll();
-  updateScrollType();
+  watchView();
 }
 
 export function bindScrollType(reduce: MediaQueryList): void {
@@ -270,12 +215,10 @@ export function bindScrollType(reduce: MediaQueryList): void {
     sync(reduceQuery?.matches ?? false);
   });
 
-  document.fonts?.ready.then(() => updateScrollType()).catch(() => undefined);
-  window.addEventListener("scrollend", () => scheduleCatchup());
+  document.fonts?.ready.then(() => scanVisible()).catch(() => undefined);
+  window.addEventListener("scrollend", () => scanVisible());
   window.addEventListener("hashchange", () => {
-    requestAnimationFrame(updateScrollType);
+    requestAnimationFrame(scanVisible);
   });
-
-  const observer = new ResizeObserver(() => updateScrollType());
-  observer.observe(document.documentElement);
+  window.addEventListener("resize", () => scanVisible());
 }
